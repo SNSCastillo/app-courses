@@ -1,0 +1,43 @@
+name: Publicar nueva versión del proyecto
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  release:
+    name: Crear y publicar una nueva Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Descargar el código del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔖 Obtener la versión desde package.json
+        run: |
+          echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: 🏷️ Crear y publicar el tag de la versión
+        id: version-tag
+        run: |
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "El tag ya existe"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: 🚀 Publicar la Release en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          generate_release_notes: true
