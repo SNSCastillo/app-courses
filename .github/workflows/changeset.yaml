@@ -1,0 +1,35 @@
+name: Crear o actualizar Pull Request de Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Generar Pull Request de Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Descargar el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: 🟢 Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 📚 Instalar las dependencias del proyecto
+        run: npm ci
+
+      - name: 🚀 Crear o actualizar el Pull Request de Release
+        uses: changesets/action@v1
+        with:
+          version: npm run changeset -- version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
